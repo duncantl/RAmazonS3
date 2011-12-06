@@ -1,0 +1,43 @@
+<article>
+<para>
+Worked at revision 80.
+</para>
+<para>
+But not working for RRupload
+</para>
+<para>
+listBucket("reproducibleresearch", virtual = TRUE)
+
+When signing:
+<r:outuput>
+str
+[1] "GET\n\n\nWed, 05 Aug 2009 15:29:57 PDT\n/www.penguin/"
+Browse[2]> ans
+[1] "yxeB2ODBGcKuz5sBasQgxzChKxA="
+</r:outuput>
+
+<http>
+GET / HTTP/1.1
+Accept: */*
+Date: Wed, 05 Aug 2009 15:29:57 PDT
+Host: www.penguin.s3.amazonaws.com
+Authorization: AWS AKIAIC4EP2ZXOU7CAUEA:yxeB2ODBGcKuz5sBasQgxzChKxA=
+</http>
+</para>
+<para>
+<r:code>
+getFile("init.R", "www.penguin", virtual = TRUE)
+</r:code>
+</para>
+
+<para>
+<r:code>
+getFile("www.penguin/foo", binary = FALSE)
+</r:code>
+<r:code>
+v = getFile("www.penguin/init.R.gz")
+library(Rcompression)
+gunzip(v)
+</r:code>
+</para>
+</article>

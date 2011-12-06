@@ -1,0 +1,121 @@
+<article xmlns:r="http://www.r-project.org" 
+	 xmlns:omg="http://www.omegahat.org" >
+<title>Tests for <omg:pkg>RAmazonS3</omg:pkg> package</title>
+<section>
+<title>Round-trip binary file</title>
+<para>
+Here we specify a binary file in the package
+and upload and then retrieve it and 
+extract  the text from the result in memory.
+<r:code>
+if(!is.null(getOption("AmazonS3"))) {
+   if(s3Exists("dtl-ttt")) {
+
+        f = system.file("sampleDocs", "Test.xml.gz")
+
+        addFile(f, "dtl-ttt")
+
+        o = getFile("dtl-ttt", "Test.xml.gz")
+        library(Rcompression)
+        txt = gunzip(o)
+        doc = xmlParse(txt, asText = TRUE)
+   }
+}
+</r:code>
+</para>
+</section>
+
+<section>
+<title>Round-trip Binary In-memory</title>
+<para>
+This version compresses a string in memory
+so that it is a binary upload. Then we put
+it on the S3 server and then retrieve it.
+We uncompress the resulting binary object and
+we see if it is the same as the original.
+<r:code>
+if(!is.null(getOption("AmazonS3"))) {
+   if(s3Exists("dtl-ttt")) {
+       library(Rcompression)
+       orig = "This is some text"
+       content = compress(orig)
+       addFile(content, "dtl-ttt/compressedString")
+       txt = uncompress(getFile("dtl-ttt/compressedString"))
+       txt == orig
+   }
+}
+</r:code>
+</para>
+</section>
+
+<section>
+<title>Images</title>
+<para>
+<r:code>
+if(!is.null(getOption("AmazonS3"))) {
+   if(s3Exists("dtl-ttt")) {
+
+       f = system.file("sampleDocs", "Riconv_dll_error.jpg", package = "RAmazonS3")
+
+      addFile(f, "dtl-ttt", type = "image/jpeg")
+      o = getFile("dtl-ttt/Riconv_dll_error.jpg")
+      if(require(ReadImages)) {
+        attributes(o) = NULL
+        f = tempfile()
+        writeBin(o, f)
+        read.jpeg(f)
+      }
+   }
+}
+</r:code>
+</para>
+</section>
+
+<section>
+<title>Saving R objects</title>
+<para>
+<r:code>
+if(!is.null(getOption("AmazonS3"))) {
+   if(s3Exists("dtl-ttt")) {
+
+     a = 1:10
+     b = letters[1:4]
+
+     s3Save(a, b, file = "dtl-ttt/save.rda")
+     print(s3Load("dtl-ttt/bob.rda"))
+   }
+}
+</r:code>
+Now using files rather than raw vectors.
+<r:code>
+if(!is.null(getOption("AmazonS3"))) {
+   if(s3Exists("dtl-ttt")) {
+       s3Save(a, b, file = "dtl-ttt/bob.rda", useFiles = TRUE)
+       print(s3Load("dtl-ttt/bob.rda"))
+   }
+}
+</r:code>
+</para>
+
+<para>
+<r:code>
+if(!is.null(getOption("AmazonS3"))) {
+   if(s3Exists("dtl-ttt")) {
+
+     a = 1:10
+     b = letters[1:4]
+ 
+     save(a, b, file = "/tmp/ttt.rda")
+     addFile("/tmp/ttt.rda", "dtl-ttt/ttt.rda", type = "application/x-rda")
+     o = getFile("dtl-ttt/ttt.rda")
+     attributes(o) = NULL
+     writeBin(o, "/tmp/ttt1.rda")
+     load("/tmp/ttt1.rda")
+}
+}
+</r:code>
+</para>
+
+</section>
+
+</article>

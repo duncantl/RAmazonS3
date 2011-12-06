@@ -1,0 +1,56 @@
+AC_INIT(inst/sign.pl)
+
+if test -z "$PERL" ; then
+  AC_PATH_PROG(PERL, perl, /usr/local/bin:/usr/bin)
+fi
+
+if test -z "${PERL}" ; then
+  echo "Cannot find the perl executable. Add it to your path or set the environment PERL."
+fi
+
+$PERL '-MDigest::HMAC_SHA1' -e ';'  &> /dev/null
+
+if  test "$?" != "0" ;  then
+  echo "You must install Digest::HMAC_SHA1"
+  FAIL="$FAIL Digest::HMAC_SHA1"
+fi
+
+$PERL '-MMIME::Base64' -e ';' &> /dev/null
+
+if  test "$?" != 0 ;  then
+  echo "You must install MIME::Base64"
+  FAIL="$FAIL MIME::Base64"
+fi
+
+if test -z "${MD5SUM}" ; then
+  for i in md5sum gmd5sum md5deep ; do
+     AC_PATH_PROG(MD5SUM, $i)     
+     if test -n "${MD5SUM}" ; then
+        break;
+     fi
+  done
+fi
+
+if test -z "${MD5SUM}" ; then
+  echo ""
+  echo "*******"
+  echo "Cannot find a program to compute the md5sum of a file."
+  echo "This is only necessary if you want to upload files without loading them into memory in R first"
+  echo ""
+  echo "*******"
+  dnl FAIL="$FAIL md5sum"
+fi
+
+
+if test -n "${FAIL}" ; then
+  echo "Install the relevant software ($FAIL) and then run this configuration again."
+  exit 1;
+fi
+
+echo "Looks like you have all the external tools you need"
+
+AC_SUBST(MD5SUM)
+AC_OUTPUT(R/defaults.R)
+
+
+

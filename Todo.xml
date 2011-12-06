@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<?xml-stylesheet type="text/xsl" href="../../../Projects/org/omegahat/Docs/XSL/Todo.xsl" ?> 
+
+<!--<?xml-stylesheet type="text/xsl" href="file:///Users/duncan/Projects/org/omegahat/Docs/XSL/Todo.xsl" ?> -->
+<!-- <?xml-stylesheet type="text/xsl" href="http://www.omegahat.org/Todo.xsl" ?> -->
+
+<topics xmlns:r="http://www.r-project.org"
+        xmlns:sh="http://www.shell.org">
+<title>XML package</title>
+
+
+<items>
+
+<item>
+Crashing R with
+
+<r:code>
+library(XML); library(digest)
+setACL("dtl-share/hello", ,"4e10a30dc41e8b3b6c7bcebe32720f27b4a79454e99155590730897b3a3f0033", "duncan", "FULL_CONTROL")
+sapply(list.files("R", pattern = "R$", full = TRUE), source)
+</r:code>
+</item>
+
+<item>
+Configuration for detecting perl modules, etc.
+gmd5sum
+Use openssl library if possible.
+</item>
+
+<item status="done">
+Problems with uploading binary content.
+Not coming back properly. But we can download
+(from other sites) binary content that is known to be good.
+So it must be the upload.
+<br/>
+Can try either inline raw() vectors or from a file.
+Need the md5sum for an external file.
+<r:code>
+</r:code>
+</item>
+
+<item status="done">
+Load from a retrieved serialization of R objects.
+<br/>
+Should be simple once we have the uploading of binary okay.
+</item>
+<item status="future">
+Get s3Load() to be able to call load() using the
+raw vector directly.
+</item>
+
+<item status="done">
+Function to save R objects to S3.
+</item>
+
+
+<item status="future">
+Nice idea from ruby's s3 is to generate a URL
+that others can use to access a file.
+With an expiration time.
+</item>
+
+<item status="done">
+exists method for an object, or a bucket.
+HEAD/about() or 
+GET nobody?
+<br/>
+Added as s3Exists() but problem with the signature
+for some reason.
+</item>
+
+
+<item status="done">
+rename method
+(copy and delete, or is there a rename method in the S3 API)
+<br/>
+This approach does not involve uploading/downloading, so 
+we don't incur a big transfer penalty by copying and moving.
+</item>
+
+<item status="done">
+about()<r:func>about</r:func> just hangs.
+Also, need to extract the information.
+</item>
+
+<item status="done">
+Take a look at ruby's s3 interface. They have nice things for meta-information.
+Standard for S3. x-amz-meta..
+http://amazon.rubyforge.org/
+<br/>
+Added to addFile() via the <r:arg>meta</r:arg> parameter.
+They come back in the http header in getFile().
+</item>
+
+<item status="low">
+Upload by reading directly from a file.
+See ftpUpload() in RCurl.
+Need to compute the md5 sum for the signature.
+So that will involve 2 passes.
+</item>
+
+
+
+<item status="low">
+Set the content-type of an object after it has been created.
+<br/>
+Doesn't look like we can do this with the API.
+Have to upload the object again, or worse,
+download and upload it again.
+<br/>
+Any chance copy can do it?
+</item>
+
+<item>
+access/acl
+What about access to a bucket, not just a file.
+<br/>
+Should work by killing off the object name.
+<invisible>
+<![CDATA[
+<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Owner>
+    <ID>a02e4359c85dad7828cc8a88c8ddd021ee5deb57cb3008ed19444ffa8f9b9a14</ID>
+    <DisplayName>rdpeng</DisplayName>
+  </Owner>
+  <AccessControlList>
+    <Grant>
+      <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser">
+        <ID>a02e4359c85dad7828cc8a88c8ddd021ee5deb57cb3008ed19444ffa8f9b9a14</ID>
+        <DisplayName>rdpeng</DisplayName>
+      </Grantee>
+      <Permission>FULL_CONTROL</Permission>
+    </Grant>
+  </AccessControlList>
+</AccessControlPolicy>
+]]>
+</invisible>
+</item>
+
+<item>
+Grant access to specific other people with Grant nodes.<br/>
+Setting an ACL.
+<br/>
+See setACL() in acl.R.
+Close but wrong signature.
+</item>
+
+<item>
+Allow groups, user ID or email for granting access.
+</item>
+
+<item>
+Lower case/Upper case 
+<br/>
+<sh:code>
+s3mkdir test2duncantl
+s3mkdir testDuncanTL
+</sh:code>
+<r:code>
+listBucket("RRupload")
+</r:code>
+<r:code>
+getBucketLocation("test2duncantl")
+</r:code>
+but
+<r:code>
+getBucketLocation("testDuncanTL")
+</r:code>
+
+<br/>
+Signing a request
+<br/>
+Deal with upper-case bucket names.
+</item>
+
+<item status="check">
+Make a bucket
+<br/>
+Working but hangs in a Expect: 100-continue
+<br/>
+Seems to work now. I added some arbitrary content via postfields.
+Perhaps that is what did it.
+</item>
+
+<item status="done">
+remove a bucket
+</item>
+
+<item status="done">
+listBucket()
+</item>
+
+
+<item status="done">
+Add interface for path in the R code,
+e.g. getFile("www.penguin/entry")
+to map to getFile("entry", "www.penguin")
+</item>
+
+<item status="check">
+getFile()
+<br/>
+Check different content-type.
+</item>
+
+<item status="done">
+addFile
+<br/>
+addFile("temp1", "www.penguin", I("This is a test to www.penguin, a private bucket"))
+<br/>
+This is one of the ones with content and so MD5 sum, etc.
+</item>
+
+
+
+<item status="done">
+If we use virtual  hosts, we seem to have a problem.
+Perhaps it is just RRupload. It is capitalized
+so RRupload.s3.amazonaws.com may not correspond
+to the bucket RRupload.
+We can go to the URL s3.amazonaws.com/RRupload
+and get a valid response, but not RRupload.s3.amazonaws.com.
+And that is in Firefox.
+<br/>
+So we use virtual if the bucket is all lower case.
+</item>
+
+
+
+
+<item status="done">
+Put a file, with permissions and content type, etc.
+</item>
+
+<item status="done">
+Virtual host names, e.g. http://RRupload.s3.amazonaws.com/foo rather
+than http://s3.amazonaws.com/RRupload/foo.
+<br/>
+Put the Host field in the header. Use vhost
+</item>
+
+<item status="check">
+Date or x-amz-date in a DELETE call.
+<br/>
+Check if it works now that we have the format of the date with a ','
+</item>
+
+
+<item status="done" pkg="RCurl">
+Put Content-Type value as an attribute of a raw return in getURLContent()
+</item>
+<item status="done" pkg="RCurl">
+Fix getURLContent() to take a .opts and merge them into 
+the curl handle.
+</item>
+</items>
+</topics>

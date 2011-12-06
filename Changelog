@@ -1,0 +1,5 @@
+0.1-4
+
+	* Continue installation even if we cannot find md5sum
+
+	

@@ -1,0 +1,25 @@
+import(XML)
+import(RCurl)
+import(digest)
+
+export(listBuckets, # done
+       listBucket,  # done but not for public ones, i.e. RRupload!
+       getBucketLocation, # done
+       getS3Access, # done. getS3Access("init.R", "www.penguin")
+       setS3Access, #
+       removeBucket, # done                            
+       makeBucket,  #done  must use virtual.
+       getFile,  # understand content type
+       addFile,  #XXX works but needs extensions for encoding, binary content, reading from files (see ftpupload in RCurl).
+       removeFile,  # done
+       copyFile,  # done
+       renameFile,
+       about, # setACL also
+       s3Exists,
+       Bucket
+      )
+
+export(s3Save, s3Load)
+
+exportClasses(Bucket)
+exportMethods("$", "[[", "$<-", "[[<-", "names")

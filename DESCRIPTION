@@ -1,0 +1,11 @@
+Package: RAmazonS3
+Version: 0.1-4
+Title: R interface to Amazon' S3 storage
+Description: This is a package the provides interfaces
+  in R to list, access, put and remove "files" on Amazon's S3
+  storage server.
+SystemDepends: perl, Digest::SHA1_HMAC, MIME::Base64
+Author: Duncan Temple Lang, Roger Peng
+Maintainer: Duncan Temple Lang <duncan@r-project.org>
+Imports: RCurl, XML, methods, digest
+License: BSD

@@ -1,0 +1,499 @@
+
+<article xmlns:r="http://www.r-project.org"
+         xmlns:omg="http://www.omegahat.org">
+<articleinfo>
+<authorgroup>
+<title>An introduction to the <omg:pkg>RAmazonS3</omg:pkg> package</title>
+<author><firstname>Duncan</firstname><surname>Temple Lang</surname></author>
+<author><firstname>Roger</firstname><surname>Peng</surname></author>
+</authorgroup>
+</articleinfo>
+<section>
+<title>Getting Started</title>
+
+<note><para>
+We note that we talk about S3 in this document.
+There is some potential for confusion.
+S3 here refers to the Amazon storage server.
+In R, S3 typically refers to the "old"-style
+class mechanism. We do not talk about that in
+this document; so S3 refers to Amazon.
+</para></note>
+
+<para>
+S3 is an Amazon service for hosting files and allowing
+them to be accessed from anywhere.
+This is a globally available file system rather than
+being tied to a particular machine.
+It avoids having to run a Web server and also 
+provides a reasonably rich way to provide different
+levels of access to files.
+</para>
+<para>
+You can access files created by others on the S3 service and you can
+create your own files.  You can work with these files yourself and
+also grant access to others to read, write, create, etc.
+We'll start with the simple case where you can read 
+buckets and files/objects that other people have created
+and to which you have access.
+Roger has a bucket named RRupload. We can fetch the list
+of objects it contains using <r:func>listBucket</r:func>, e.g.,
+<r:code>
+listBucket("RRupload", auth = NA)
+</r:code>
+We specify the name and explicitly force that no authorization
+information needs to be sent.
+<footnote><para>We should be able to do this a signature, but this is misbehaving at present.
+It looks to be something with upper-case bucket names.</para></footnote>
+The result is a data frame
+<r:output>
+          Key        LastModified                             ETag Size                               ID StorageClass
+1 Todo.xml.gz 2009-07-31 18:17:41 55a67aed325ff758a0896473f4c91554 1703 65a011a29cdf8ec533ec3d1ccaae921c     STANDARD
+2         bar 2009-07-31 17:16:01 bb184e3e0ca66a62c07e8f1871dd1039   16 65a011a29cdf8ec533ec3d1ccaae921c     STANDARD
+3    bucket.R 2009-07-30 13:32:35 126b7cdb5ff3c316373502570511599d  340 65a011a29cdf8ec533ec3d1ccaae921c     STANDARD
+4  compressed 2009-07-31 17:35:27 f87e83ae612fbf5593ea6a44a4cb08f8   80 65a011a29cdf8ec533ec3d1ccaae921c     STANDARD
+5         foo 2009-07-31 17:14:31 bb184e3e0ca66a62c07e8f1871dd1039   16 65a011a29cdf8ec533ec3d1ccaae921c     STANDARD
+6         tmp 2009-08-02 23:09:11 41fb5b5ae4d57c5ee528adb00e5e8e74   16 65a011a29cdf8ec533ec3d1ccaae921c     STANDARD
+7         xxx 2009-07-31 18:32:57 b5a7791824a3719256e4884e9c65c7f3   23 65a011a29cdf8ec533ec3d1ccaae921c     STANDARD
+</r:output>
+This gives us the names of each object and its size and
+when it was last modified. The ETag and ID fields
+are used to uniquely identify the object
+and the developer who created/modified the object.
+</para>
+</section>
+<section>
+<title>Getting the Contents of an Object</title>
+<para>
+We can retrieve the contents of objects in a bucket that
+we have read-access to with <r:func>getFile</r:func>.
+We give this both the name of the object and the bucket.
+This can be done as two separate arguments (bucket and name)
+or as a single argument of the form <emphasis>bucket/object</emphasis>.
+So we can get the object bucket.R in RRupload with either
+<r:code>
+x = getFile("RRupload", "bucket.R", auth = NA)
+y = getFile("RRupload/bucket.R", auth = NA)
+</r:code>
+Depending on how the object was created, there
+may or may not be information about its content type.
+If there is, <r:func>getFile</r:func> attempts to handle it correctly,
+e.g. recognizing text content and converting it 
+to a character string.  However, if there is not
+content type information, we return the content as a
+raw vector. If you know this is text, you can convert it with
+<r:code>
+rawToChar(x)
+</r:code>
+</para>
+
+<para>
+This is about all you can do with nothing but read-permissions.
+So we'll move on to functions that require permissions.
+</para>
+</section>
+
+<section>
+<title>More control</title>
+<para>
+Once you have a login and secret, be they your own or
+somebody else's, you can do a lot more with Amazon S3.
+Firstly, you can find all the buckets
+owned by that login with <r:func>listBuckets</r:func>.
+You specify the login and secret key as a named
+character vector as the value of the <r:arg>auth</r:arg>
+parameter, e.g.,
+<r:code>
+listBuckets(auth = c('login' = 'secret'))
+</r:code>
+</para>
+<para>
+Many users will have a single login-secret pair
+and it is convenient to put these in your
+R global options. You can set these as
+<r:code>
+options(AmazonS3 = c('login' = "secret"))
+</r:code>
+The functions in <omg:pkg>RAmazonS3</omg:pkg>
+will look for this and use it if <r:arg>auth</r:arg> is
+not specified in a call.
+So we can set the option and then call  <r:func>listBuckets</r:func>
+simply with 
+<r:code>
+listBuckets()
+<r:output>
+                bucket        creationDate
+1             RRupload 2009-06-01 19:39:36
+2                 cpkg 2009-06-01 18:54:56
+3       duncantl-test1 2009-08-06 21:11:02
+4             rdpshare 2009-06-04 12:19:19
+5 reproducibleresearch 2009-06-01 18:40:23
+6        test3duncantl 2009-08-06 15:28:27
+7        test4duncantl 2009-08-06 15:28:45
+8         testDuncanTL 2009-08-05 23:51:27
+9          www.penguin 2009-06-01 21:20:38
+</r:output>
+</r:code>
+</para>
+
+<para>
+Now that we know what buckets  we have,
+we can list any one of these with 
+<r:func>listBucket</r:func> (and using
+the implicit specification of the <r:arg>auth</r:arg>
+argument), e.g., 
+<r:code>
+listBucket("rdpshare")
+<r:output>
+           Key        LastModified                             ETag
+1 greeting.xml 2009-07-30 00:25:10 8822584dd80ffc3c609ed799334d5766
+  Size                                                         Owner.ID
+1  101 a02e4359c85dad7828cc8a88c8ddd021ee5deb57cb3008ed19444ffa8f9b9a14
+  Owner.DisplayName StorageClass
+1            rdpeng     STANDARD
+</r:output>
+</r:code>
+</para>
+<para>
+We can get the file with 
+<r:code>
+rawToChar(getFile("rdpshare/greeting.xml"))
+</r:code>
+</para>
+</section>
+<section>
+<title>Creating and Removing Buckets</title>
+<para>
+The function <r:func>makeBucket</r:func> can
+be used to create a new bucket.
+For example, we can create a bucket named
+"duncantl-test" with the command
+<r:code>
+makeBucket("duncantl-test")
+</r:code>
+<footnote><para>At present, this sometimes "hangs" waiting for additional input.
+Ctrl-D will terminate it and the bucket will be created. This is something
+to do with the HTTP header, but we have killed off the Expect: 100-continue
+and sent a Content-length of 0.
+</para></footnote>
+</para>
+<para>
+We can remove a bucket with  <r:func>removeBucket</r:func>,
+giving it the name of the bucket, e.g.,
+<r:code>
+removeBucket("duncantl-test")
+</r:code>
+</para>
+</section>
+<section>
+<title>Creating Objects/Content</title>
+<para>
+It is not very useful to be only able to create buckets.
+We want to be able to store content.
+We can do this by uploading files or by taking
+content directly in R and uploading it from memory.
+We do this with the function <r:func>addFile</r:func>.
+This expects the contents or file name to upload
+and then the location on S3 to where it will be uploaded.
+We can give the bucket-name pair in a single
+string as before in the form "bucket/name"
+or as two separate arguments - bucket, name.
+These two forms are show here
+<r:code>
+content = I("This is a string")
+addFile(content, "duncantl-test/foo") # note the missing 2nd argument.
+addFile(content, "duncantl-test", "bar")
+</r:code>
+</para>
+<para>
+The content can be any R object.
+If it is a string, we assume that this is the name of a
+file and we read that file and upload it.
+If we want to specify actual text to be uploaded
+as-is, we can "escape" it using the AsIs function
+<r:func>I</r:func> as we have shown above.
+When <r:func>addFile</r:func> sees that contents
+inherits from <r:class>AsIs</r:class>, it does not
+consider the string to be a file name.
+We can also use the <r:arg>isContents</r:arg> parameter
+to specify this explicitly.
+</para>
+<para>
+Once we have uploaded the content/file, we will see it in
+the listing:
+<r:code>
+listBucket("duncantl-test")
+<r:output>
+  Key        LastModified                             ETag Size
+1 foo 2009-08-06 23:11:27 41fb5b5ae4d57c5ee528adb00e5e8e74   16
+                                                          Owner.ID
+1 a02e4359c85dad7828cc8a88c8ddd021ee5deb57cb3008ed19444ffa8f9b9a14
+  Owner.DisplayName StorageClass
+1            rdpeng     STANDARD
+</r:output>
+</r:code>
+</para>
+<para>
+When we upload content, we should specify its content type.
+We have seen that if we don't, accessing it requires more intervention
+by the recipient.
+We can specify the content type via the <r:arg>type</r:arg>
+parameter. This should be something reasonably standard
+such as "application/gzip", "application/binary",
+"text/html" or "text/xml".
+We may provide functionality that guesses the content-type 
+from the extension of the file or type of the object.
+For now, if we have a character string, we set the 
+content-type to text. Otherwise, we assume binary content.
+</para>
+<para>
+We can also specify additional meta-information.
+These are, in some sense, similar attributes on an R object
+in that they are name-vale pairs. The values will be converted
+to strings. You specify these when uploading an object via
+the <r:arg>meta</r:arg> argument.
+The command
+<r:code>
+addFile(I("Some text"), "dtl-ttt", "bob",
+         meta = c(foo = 123, author = "Duncan Temple Lang"))
+</r:code>
+provides two meta values named "foo" and "author".
+We can retrieve this meta-information  for any of the S3 objects.
+</para>
+<para>
+As easy as it is to create content, we can remove an
+object with <r:func>removeFile</r:func>, e.g.
+<r:code>
+removeFile("duncantl-test/foo")
+removeFile("duncantl-test", "foo")
+</r:code>
+
+</para>
+<para>
+Another somewhat convenient operation is to copy a file/object.
+We can copy an object in a bucket to an other object in the same
+bucket or to an entirely separate bucket.
+We use <r:func>copyFile</r:func> for this.
+We give it the name of the existing source object
+and the target object as the two arguments.
+These can (and should be) in the form "bucket/name".
+The target can be just a name and we assume the target
+bucket is the same as the source.
+<r:code>
+copyFile("duncantl-test/bar", "xxx")
+</r:code>
+Alternatively, we can copy an object from one
+bucket to another, e.g.
+<r:code>
+copyFile("www.penguin/temp1", "dtl-share/temp1")
+</r:code>
+We can also copy an object to another bucket 
+and re-use the object name within the new bucket
+by adding a "/" to the end of the target bucket.
+For example, 
+<r:code>
+copyFile("dtl-share/temp1", "dtl-ttt/")
+</r:code>
+will create a copy of temp1 in dtl-ttt.
+</para>
+</section>
+<section>
+<title>Other Facilities</title>
+<para>
+We have described the commonly used facilities above.  There are a few
+others.  
+We can determine if an object exists using <r:func>s3Exists</r:func>.
+For example,
+<r:code>
+s3Exists("dtl-ttt/bob")
+s3Exists("dtl-ttt/jane")
+</r:code>
+determine if the two objects named  bob and jane 
+are present in the bucket "dtl-ttt".
+</para>
+<para>
+We can get (meta-)information about an object with
+<r:func>about</r:func> (also named <r:func>getInfo</r:func>).
+This returns a character vector giving any meta-data
+associated with the object, e.g. that was specified when the object/file was created.
+For example, 
+<r:code>
+about("dtl-ttt/bob")
+about("dtl-ttt", "bob")
+<r:output><![CDATA[
+                            author
+                  "Duncan Temple Lang"
+                                   foo
+                                 "123"
+                         Last-Modified
+       "Sat, 08 Aug 2009 00:20:11 GMT"
+                                  ETag
+"\"9db5682a4d778ca2cb79580bdb67083f\""
+                          Content-Type
+                          "text/plain"
+                        Content-Length
+                                   "9"
+                                Server
+                            "AmazonS3"
+]]></r:output>
+</r:code>
+
+</para>
+<para>
+We can query and set the access controls for a bucket or
+file/object.  The simple way to do this is with
+<r:func>getS3Access</r:func> and <r:func>setS3Access</r:func>.  These
+take the name of the object being queried as bucket-name
+pair. <r:func>getS3Access</r:func> tells us who has what
+permissions. It returns a data frame giving this information for the
+specified bucket or bucket-object.  <r:func>setS3Access</r:func>
+allows us to set a permission in a simple way.  We can make a bucket
+or object private, public for reading, public for reading and writing,
+or authenticated read access.  These apply to everybody.
+<r:func>setACL</r:func> allows us to specify fine-grained access "limitations"
+for individuals.
+</para>
+<para>
+Let's create a new bucket named "dtl-share" and a file to it:
+<r:code>
+makeBucket("dtl-share")
+addFile(I("Hi everyone"), "dtl-share/hello")
+</r:code>
+Now we look at the access settings:
+<r:code>
+getS3Access("dtl-share")
+<r:output>
+                                                                ID DisplayName   permission
+1 a02e4359c85dad7828cc8a88c8ddd021ee5deb57cb3008ed19444ffa8f9b9a14      rdpeng FULL_CONTROL
+</r:output>
+</r:code>
+(We are using Roger's login and that is why it is owned by him
+eventhough we are using dtl s a bucket name!)  We get the same result
+for the "hello" file.
+</para>
+<para>
+So now let's make that file publicly available.
+<r:code>
+setS3Access("dtl-share", "hello", "public-read")
+</r:code>
+Now we can examine the access settings
+<r:code>
+getS3Access("dtl-share/hello")
+<r:output><![CDATA[
+                                                                ID DisplayName                                             URI   permission
+1 a02e4359c85dad7828cc8a88c8ddd021ee5deb57cb3008ed19444ffa8f9b9a14      rdpeng                                            <NA> FULL_CONTROL
+2                                                             <NA>        <NA> http://acs.amazonaws.com/groups/global/AllUsers         READ
+]]></r:output>
+</r:code>
+This shows the original access (for rdpeng)
+but has a second row and a new column in the data frame - <r:var>URI</r:var>.
+This second row indicates that all the users can read this file.
+You can access it via a Web browser at <ulink url="http://dtl-share.s3.amazonaws.com/hello"/>.
+</para>
+<para>
+But what if we want to allow DTL to have full control over the file also.
+<r:code>
+setACL("dtl-share/hello", "4e10a30dc41e8b3b6c7bcebe32720f27b4a79454e99155590730897b3a3f0033", "duncan", "FULL_CONTROL")
+</r:code>
+</para>
+</section>
+
+<section>
+<title>Bucket Objects</title>
+<para>
+We have described the low-level functionality in R for
+directly accessing the S3 Amazon storage server's
+facilities.
+We now turn our attention to a different R interface
+that hides some of these functions.
+You still list all the buckets available
+for a particular "login" via <r:func>listBuckets</r:func>.
+However, instead of <r:expr eval="false">listBucket(name)</r:expr>,
+we can think of the bucket as being an object in R.
+We create such an object with
+<r:code>
+dtl.share = Bucket("dtl-share")
+</r:code>
+(We could have assigned this to any variable in R.)  This is an object
+of class <r:class>Bucket</r:class>.  It has methods that working with
+it slightly more convenient, especially for interactive use.  The
+constructor also allows us to specify the authorization key and secret
+which is stored in the object.  This allows us to avoid having to
+specify authorization information in subsequent calls.  This is
+convenient if one is working with several different authorization
+keys, even within the same bucket.  One can have a separate
+<r:class>Bucket</r:class> object for each authorization.  Note that
+these bucket objects should not be serialized as the secret is
+private.
+ 
+</para>
+<para>
+The first thing we can do with a <r:class>Bucket</r:class> object
+is get a list of the objects it contains using
+<r:func>names</r:func>.
+This gives the names of the objects as a character vector.
+</para>
+<para>
+We can fetch the contents of one of the objects in a bucket
+with the <r:op>[[</r:op> or <r:op>$</r:op> operator, e.g.
+<r:code>
+b$temp1
+b[["temp1"]]
+</r:code>
+One of the benefits of the <r:op>[[</r:op>
+syntax is that we can specify additional arguments.
+For example, we could specify whether the content was binary 
+or not using
+<r:code>
+b[["temp1", binary = FALSE]]
+</r:code>
+</para>
+<para>
+We can use a <r:class>Bucket</r:class> object
+to upload content to an object within the bucket.
+We use <r:op>$&lt;-</r:op> or <r:op>[[&lt;-</r:op>,
+e.g.,
+<r:code>
+b$temp3 = I("A string in R")
+doc = xmlParse(system.file("doc", "s3amazon.xml"))
+b[["temp4", type = "text/html"]] = I(saveXML(doc))
+</r:code>
+</para>
+
+</section>
+<section>
+<title>Higher-level Functionality</title>
+<para>
+The function <r:func>s3Save</r:func> is an almost exact substitute for
+the <r:func>save</r:func> function.  It allows us to serialize one or
+more R objects into a file and to upload that file to S3. The
+<r:arg>file</r:arg> parameter in this function identifies the bucket
+and object in the S3 server, e.g. "dtl-share/ab.rda"
+<r:code>
+a = 1:10
+b = letters[1:4]
+s3Save(a, b, file = "dtl-share/ab.rda")
+</r:code>
+This saves the objects in a binary format and gives the resulting
+S3 amazon object a Content-Type of application/x-rda.
+We will implement a corresponding handler for 
+de-serializing directly from the S3 server as we retrieve it,
+e.g.
+<r:code>
+s3Load("dtl-share/ab.rda")
+</r:code>
+or even
+<r:code>
+getFile("dtl-share/ab.rda")
+</r:code>
+and let <r:func>getURLContent</r:func> to do the work for us.
+</para>
+</section>
+<section>
+<title>Future Directions</title>
+<para>
+Roger has some nice ideas about disseminating
+objects from statistical analyses using S3 as a repository.
+</para>
+</section>
+</article>

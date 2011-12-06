@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>RAmazonS3</title>
+<link rel="stylesheet" href="http://www.omegahat.org/OmegaTech.css"/>
+</head>
+
+<body>
+<h1>RAmazonS3</h1>
+<p align="right">Last Release:
+  <a href="RAmazonS3_0.1-4.tar.gz">0.1-4</a> (<font color="red">15 Feb 2011</font>)</p>
+
+<p>
+This package provides the basic infrastructure within R 
+for communicating with the S3 Amazon storage server.
+This is commercial server that allows one to store
+content and retrieve it from any machine connected
+to the Internet.  The "files" or objects that one creates
+can be made available to other S3 users or available
+generally via a URL.
+To store, access  and control access to files on the S3 server,
+one typically needs to sign up for a login and AWS secret
+which are needed in most calls.
+Content that is made accessible to all does not require
+a login-secret pair.
+</p>
+<p>
+The package provides functions for most of the common
+operations available in the S3 interface.
+This includes
+<ul>
+  <li> finding all buckets belonging to a particular user/login,
+  <li> listing the contents of any bucket,
+  <li> retrieving a file,
+  <li> adding a file
+  <li> removing a file or bucket,
+  <li> copying a file,
+  <li> renaming a file,
+  <li> setting access to a file or bucket,
+  <li> querying meta-information about a file,
+</ul>
+</p>
+
+<h2>Documentation</h2>
+
+<dl>
+  <dt>
+  <li> User's guide:  <a href="s3amazon.pdf">PDF</a> <a href="s3amazon.html">HTML</a>
+  <dd>
+</dl>
+
+
+<hr>
+<address><a href="http://www.stat.ucdavis.edu/~duncan">Duncan Temple Lang</a>
+<a href=mailto:duncan@wald.ucdavis.edu>&lt;duncan@wald.ucdavis.edu&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Sun Aug  9 12:10:20 PDT 2009
+<!-- hhmts end -->
+</body> </html>

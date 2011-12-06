@@ -1,0 +1,4 @@
+PKG_CPPFLAGS=$(shell curl-config --cflags)
+PKG_LIBS=$(shell curl-config --libs)
+
+# cc signheader.c -w -o signheader  -lcurl -lcrypto

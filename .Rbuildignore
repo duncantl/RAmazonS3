@@ -1,0 +1,16 @@
+Amazon.pl
+.*..Rcheck.*
+src.*
+.*.tcp
+.*-temp
+aws
+aws-origg
+awstry
+foo.rda
+foo.rdtxt
+init.R.gz
+tt
+Test.xml.gz
+s3-qrc.pdf
+.*py.*
+.*Web.*
