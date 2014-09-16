@@ -19,7 +19,7 @@ export(listBuckets, # done
        Bucket
       )
 
-export(s3Save, s3Load)
+export(s3Save, s3Load, s3Source)
 
 exportClasses(Bucket)
 exportMethods("$", "[[", "$<-", "[[<-", "names")

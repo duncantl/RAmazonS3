@@ -50,3 +50,22 @@ function(bucket, name, envir = parent.frame(), auth = getOption("AmazonS3"),
      writeBin(data, f)
      load(f, envir)
 }
+
+s3Source =
+  function(bucket, name, envir = parent.frame(), auth = getOption("AmazonS3"),
+           curl = getCurlHandle(), virtual = (tolower(bucket) == bucket))
+{
+
+    if(missing(name)) {
+      tmp = strsplit(bucket, "/")[[1]]
+      name = paste(tmp[-1], collapse = "/")
+      bucket = tmp[1]
+    }
+    
+    data <-  getFile(bucket, name, auth = auth, virtual = virtual, curl = curl)
+    
+    rcode <- rawToChar( data )
+    eval( parse(text=rcode) )
+    
+}
+  
